@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String
+  isOnboarded  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  lockInStart  DateTime?
+  lockInDays   Int       @default(30)
+
+  dsaProfile        DSAProfile?
+  gymProfile        GymProfile?
+  skillPlans        SkillPlan[]
+  skillSessions     SkillSession[]
+  dsaSnapshots      DSASnapshot[]
+  dsaSubmissions    DSASubmission[]
+  gymSessions       GymSession[]
+  weightLogs        WeightLog[]
+  dailyScores       DailyScore[]
+  productivityGoal  ProductivityGoal?
+}
+
+model DSAProfile {
+  userId         Int     @id
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lcUsername     String?
+  cfHandle       String?
+  ccUsername     String?
+  dailyTarget    Int     @default(5)
+  targetCfRating Int?
+  updatedAt      DateTime @updatedAt
+}
+
+model DSASnapshot {
+  id                  Int      @id @default(autoincrement())
+  userId              Int
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                DateTime @db.Date
+  platform            String
+  problemsSolvedTotal Int      @default(0)
+  problemsSolvedToday Int      @default(0)
+  rating              Int?
+  rawData             Json?
+  createdAt           DateTime @default(now())
+
+  @@unique([userId, date, platform])
+}
+
+model DSASubmission {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform     String
+  problemId    String
+  problemTitle String
+  tags         Json?
+  difficulty   String?
+  status       String
+  submittedAt  DateTime
+
+  @@unique([userId, platform, problemId])
+}
+
+model GymProfile {
+  userId              Int     @id
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  heightCm            Int?
+  currentWeightKg     Float?
+  targetWeightKg      Float?
+  goal                String?
+  experienceLevel     String?
+  trainingDaysPerWeek Int?
+  programSplit        String?
+  injuryNotes         String?
+  updatedAt           DateTime @updatedAt
+}
+
+model GymSession {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date            DateTime @db.Date
+  sessionType     String?
+  durationMinutes Int?
+  energyLevel     Int?
+  rawLog          String?
+  aiFeedback      String?
+  isRestDay       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  exercises       GymExercise[]
+}
+
+model GymExercise {
+  id            Int        @id @default(autoincrement())
+  sessionId     Int
+  session       GymSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name          String
+  muscleGroup   String?
+  setsJson      Json
+  totalVolumeKg Float?
+  isPr          Boolean    @default(false)
+  notes         String?
+}
+
+model WeightLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  weightKg  Float
+  timeOfDay String?
+  loggedAt  DateTime @default(now())
+
+  @@unique([userId, date])
+}
+
+model SkillPlan {
+  id                  Int       @id @default(autoincrement())
+  userId              Int
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                String
+  description         String?
+  totalHoursEstimated Int
+  learningModes       Json
+  specificGoal        String?
+  deadline            DateTime? @db.Date
+  resources           String?
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  milestones          SkillMilestone[]
+  sessions            SkillSession[]
+}
+
+model SkillMilestone {
+  id          Int       @id @default(autoincrement())
+  skillId     Int
+  skill       SkillPlan @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  title       String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+}
+
+model SkillSession {
+  id                  Int       @id @default(autoincrement())
+  skillId             Int
+  skill               SkillPlan @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  userId              Int
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                DateTime  @db.Date
+  durationMinutes     Int
+  activitiesJson      Json?
+  blockerText         String?
+  aiFeedback          String?
+  progressEstimatePct Float?
+  createdAt           DateTime  @default(now())
+}
+
+model DailyScore {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  score       Float    @default(0)
+  dsaPts      Float    @default(0)
+  skillPts    Float    @default(0)
+  gymPts      Float    @default(0)
+  githubPts   Float    @default(0)
+  weightPts   Float    @default(0)
+  streakBonus Float    @default(0)
+
+  @@unique([userId, date])
+}
+
+model ProductivityGoal {
+  userId                Int   @id
+  user                  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dsaWeight             Float @default(30)
+  skillWeight           Float @default(25)
+  gymWeight             Float @default(20)
+  githubWeight          Float @default(15)
+  weightWeight          Float @default(10)
+  streakThreshold       Int   @default(60)
+  dailySkillTargetHours Float @default(2.0)
+}
