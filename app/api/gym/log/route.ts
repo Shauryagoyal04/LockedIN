@@ -52,5 +52,15 @@ export async function POST(req: NextRequest) {
     include: { exercises: true },
   })
 
-  return NextResponse.json(created)
+  return NextResponse.json({
+    id: created.id,
+    date: created.date.toISOString().slice(0, 10),
+    rawLog: created.rawLog,
+    exercises: created.exercises.map((e) => ({
+      id: e.id,
+      name: e.name,
+      muscleGroup: e.muscleGroup,
+      sets: e.setsJson,
+    })),
+  })
 }
