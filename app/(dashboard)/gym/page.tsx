@@ -1,8 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Dumbbell, Pencil, X, Check } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import LogWorkoutForm from '@/components/gym/LogWorkoutForm'
+import WeeklyVolume from '@/components/gym/WeeklyVolume'
+import RecentSessions from '@/components/gym/RecentSessions'
+import type { WeeklyPayload } from '@/components/gym/types'
 
 interface GymProfile {
   userId: number
@@ -28,11 +32,18 @@ export default function GymPage() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [weekly, setWeekly] = useState<WeeklyPayload | null>(null)
   const [form, setForm] = useState({
     currentWeightKg: '', heightCm: '', targetWeightKg: '',
     goal: '', experienceLevel: '', trainingDaysPerWeek: '',
     programSplit: '', injuryNotes: '',
   })
+
+  const refetchWeekly = useCallback(() => {
+    fetch('/api/gym/weekly')
+      .then(r => r.json())
+      .then((data: WeeklyPayload) => setWeekly(data))
+  }, [])
 
   useEffect(() => {
     fetch('/api/gym/profile')
@@ -51,7 +62,9 @@ export default function GymPage() {
         })
       })
       .finally(() => setLoading(false))
-  }, [])
+    refetchWeekly()
+  }, [refetchWeekly])
+
 
   async function handleSave() {
     setSaving(true)
@@ -183,14 +196,9 @@ export default function GymPage() {
         )}
       </div>
 
-      {/* Phase 3 info card */}
-      <div className="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-5">
-        <h3 className="font-medium text-indigo-300 mb-1">AI Workout Logging</h3>
-        <p className="text-gray-400 text-sm">
-          Phase 3 brings a conversational AI interface — describe your workout in plain text
-          and Claude will extract and store structured exercise data with progressive overload analysis.
-        </p>
-      </div>
+      <LogWorkoutForm onLogged={refetchWeekly} />
+      <WeeklyVolume volume={weekly?.volume ?? []} />
+      <RecentSessions sessions={weekly?.recentSessions ?? []} />
     </div>
   )
 }
