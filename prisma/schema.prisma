@@ -18,8 +18,6 @@ model User {
 
   dsaProfile        DSAProfile?
   gymProfile        GymProfile?
-  skillPlans        SkillPlan[]
-  skillSessions     SkillSession[]
   dsaSnapshots      DSASnapshot[]
   dsaSubmissions    DSASubmission[]
   gymSessions       GymSession[]
@@ -120,47 +118,6 @@ model WeightLog {
   loggedAt  DateTime @default(now())
 
   @@unique([userId, date])
-}
-
-model SkillPlan {
-  id                  Int       @id @default(autoincrement())
-  userId              Int
-  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name                String
-  description         String?
-  totalHoursEstimated Int
-  learningModes       Json
-  specificGoal        String?
-  deadline            DateTime? @db.Date
-  resources           String?
-  isActive            Boolean   @default(true)
-  createdAt           DateTime  @default(now())
-  milestones          SkillMilestone[]
-  sessions            SkillSession[]
-}
-
-model SkillMilestone {
-  id          Int       @id @default(autoincrement())
-  skillId     Int
-  skill       SkillPlan @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  title       String
-  completed   Boolean   @default(false)
-  completedAt DateTime?
-}
-
-model SkillSession {
-  id                  Int       @id @default(autoincrement())
-  skillId             Int
-  skill               SkillPlan @relation(fields: [skillId], references: [id], onDelete: Cascade)
-  userId              Int
-  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date                DateTime  @db.Date
-  durationMinutes     Int
-  activitiesJson      Json?
-  blockerText         String?
-  aiFeedback          String?
-  progressEstimatePct Float?
-  createdAt           DateTime  @default(now())
 }
 
 model DailyScore {

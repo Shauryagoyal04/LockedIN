@@ -51,17 +51,7 @@ export interface VolumeRow {
   target: number
 }
 
-export interface SkillRow {
-  id: string | number
-  name: string
-  hoursDone: number
-  hoursGoal: number
-  deadline: string // "Jul 10"
-  pace: number    // hours ahead/behind
-}
-
 export interface PillarsData {
   dsa: { todaySolved: number; target: number; platforms: PlatformRow[]; behindBy: number }
   gym: { weightKg: number; deltaPerWeek: string; volume: VolumeRow[]; spark7: number[] }
-  skills: { totalHours: number; goalHours: number; list: SkillRow[] }
 }

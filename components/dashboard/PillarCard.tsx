@@ -13,7 +13,7 @@ interface PillarCardProps {
 }
 
 /** A Focused-style operator pillar card — the slim, dense column that
- *  holds platform rows / volume bars / skill rows. Click to deep-dive. */
+ *  holds platform rows / volume bars. Click to deep-dive. */
 export default function PillarCard({ title, sub, href, children, footer }: PillarCardProps) {
   return (
     <Link

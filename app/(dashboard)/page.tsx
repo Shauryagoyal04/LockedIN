@@ -37,7 +37,6 @@ const emptyToday: DashboardToday = {
 const emptyPillars: PillarsData = {
   dsa: { todaySolved: 0, target: 5, platforms: [], behindBy: 5 },
   gym: { weightKg: 0, deltaPerWeek: '—', volume: [], spark7: [] },
-  skills: { totalHours: 0, goalHours: 0, list: [] },
 }
 
 export default function DashboardPage() {
@@ -105,33 +104,6 @@ export default function DashboardPage() {
               : cell
           })
         )
-      })
-      .catch(() => {})
-
-    // Skills → pillars
-    fetch('/api/skills')
-      .then(r => (r.ok ? r.json() : null))
-      .then((skills: Array<{
-        id: number
-        name: string
-        hoursLogged: number
-        totalHoursEstimated: number
-        deadline: string | null
-      }> | null) => {
-        if (!skills) return
-        const list = skills.map(s => ({
-          id: s.id,
-          name: s.name,
-          hoursDone: s.hoursLogged ?? 0,
-          hoursGoal: s.totalHoursEstimated,
-          deadline: s.deadline
-            ? new Date(s.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-            : '—',
-          pace: 0,
-        }))
-        const totalHours = list.reduce((sum, s) => sum + s.hoursDone, 0)
-        const goalHours = list.reduce((sum, s) => sum + s.hoursGoal, 0)
-        setPillars(prev => ({ ...prev, skills: { totalHours, goalHours, list } }))
       })
       .catch(() => {})
   }, [])

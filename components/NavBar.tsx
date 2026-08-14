@@ -3,13 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { LayoutDashboard, Code2, Dumbbell, BookOpen, LogOut, Flame, UserCircle } from 'lucide-react'
+import { LayoutDashboard, Code2, Dumbbell, LogOut, Flame, UserCircle } from 'lucide-react'
 
 const links = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dsa', label: 'DSA', icon: Code2 },
   { href: '/gym', label: 'Gym', icon: Dumbbell },
-  { href: '/skills', label: 'Skills', icon: BookOpen },
   { href: '/profile', label: 'Profile', icon: UserCircle },
 ]
 

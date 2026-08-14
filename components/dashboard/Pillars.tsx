@@ -10,10 +10,9 @@ interface PillarsProps {
 
 export default function Pillars({ data }: PillarsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2">
       <DSAPillar data={data.dsa} />
       <GymPillar data={data.gym} />
-      <SkillsPillar data={data.skills} />
     </div>
   )
 }
@@ -83,42 +82,6 @@ function GymPillar({ data }: { data: PillarsData['gym'] }) {
             <span className="text-right font-mono text-[11px] text-gray-500">
               {v.sets}/{v.target}
             </span>
-          </div>
-        )
-      })}
-    </PillarCard>
-  )
-}
-
-function SkillsPillar({ data }: { data: PillarsData['skills'] }) {
-  return (
-    <PillarCard
-      title="Skills"
-      sub={`${data.totalHours}h / ${data.goalHours}h logged`}
-      href="/skills"
-    >
-      {data.list.map(s => {
-        const pct = Math.min(100, (s.hoursDone / s.hoursGoal) * 100)
-        const behind = s.pace < -0.5
-        return (
-          <div key={s.id} className="border-b border-dashed border-gray-800 py-2.5 last:border-0">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-gray-300">{s.name}</span>
-              <span
-                className={`font-mono ${behind ? 'text-brand-500' : 'text-gray-500'}`}
-              >
-                {behind ? 'BEHIND' : 'ON PACE'}
-              </span>
-            </div>
-            <div className="mt-1.5 h-[3px] overflow-hidden rounded-full bg-gray-800">
-              <div
-                className={`h-full ${behind ? 'bg-brand-500' : 'bg-gray-400'}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.1em] text-gray-500">
-              {s.hoursDone}/{s.hoursGoal}H · Due {s.deadline}
-            </p>
           </div>
         )
       })}

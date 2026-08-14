@@ -1,21 +1,5 @@
 export type Goal = 'lean_bulk' | 'cut' | 'recomposition' | 'maintain'
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced'
-export type LearningMode =
-  | 'watch_lectures'
-  | 'build_projects'
-  | 'read_docs'
-  | 'practice_problems'
-  | 'mock_interviews'
-
-export interface SkillFormData {
-  name: string
-  description: string
-  totalHoursEstimated: number
-  learningModes: LearningMode[]
-  specificGoal: string
-  deadline: string
-  resources: string
-}
 
 export interface DSAProfileData {
   userId: number
@@ -38,29 +22,6 @@ export interface GymProfileData {
   programSplit: string | null
   injuryNotes: string | null
   updatedAt: string
-}
-
-export interface SkillPlanData {
-  id: number
-  userId: number
-  name: string
-  description: string | null
-  totalHoursEstimated: number
-  learningModes: LearningMode[]
-  specificGoal: string | null
-  deadline: string | null
-  resources: string | null
-  isActive: boolean
-  createdAt: string
-  milestones: MilestoneData[]
-}
-
-export interface MilestoneData {
-  id: number
-  skillId: number
-  title: string
-  completed: boolean
-  completedAt: string | null
 }
 
 export interface DashboardTodayData {
