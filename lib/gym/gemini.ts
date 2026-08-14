@@ -81,7 +81,7 @@ const PROMPT_PREFIX = "Extract structured workout data from this free-text log. 
 
 export async function parseWorkoutLog(text: string): Promise<ParsedWorkout> {
   const res = await getClient().models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.6-flash',
     contents: PROMPT_PREFIX + text,
     config: { responseMimeType: 'application/json', responseSchema },
   })
