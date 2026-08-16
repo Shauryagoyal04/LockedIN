@@ -2,6 +2,17 @@
 
 import { ChevronLeft, ChevronRight, RefreshCw, Sparkles } from 'lucide-react'
 
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function formatWeekRange(weekStart: string): string {
+  const start = new Date(weekStart + 'T00:00:00.000Z')
+  const end = new Date(start)
+  end.setUTCDate(end.getUTCDate() + 6)
+  const startLabel = `${MONTH_NAMES[start.getUTCMonth()]} ${start.getUTCDate()}`
+  const endLabel = `${MONTH_NAMES[end.getUTCMonth()]} ${end.getUTCDate()}`
+  return `${startLabel} — ${endLabel}`
+}
+
 export interface RecapData {
   headline: string
   highlights: string[]
@@ -35,17 +46,17 @@ export default function WeeklyRecap({
   regenerateError,
 }: WeeklyRecapProps) {
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-4">
+    <div className="bg-gray-800 border border-gray-700 rounded-2xl p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-indigo-400" />
+          <Sparkles size={16} className="text-brand-500" />
           <h2 className="font-semibold text-white">Weekly Recap</h2>
         </div>
         <div className="flex items-center gap-1.5">
           <button onClick={onPrevWeek} className="text-gray-400 hover:text-white transition-colors" aria-label="Previous week">
             <ChevronLeft size={16} />
           </button>
-          <span className="text-xs text-gray-500 font-mono w-20 text-center">{weekStart}</span>
+          <span className="text-xs text-gray-500 font-mono whitespace-nowrap">{formatWeekRange(weekStart)}</span>
           <button
             onClick={onNextWeek}
             disabled={!canGoNext}
@@ -71,7 +82,7 @@ export default function WeeklyRecap({
               ))}
             </ul>
           )}
-          <p className="text-sm text-indigo-400 mb-3">{recap.focusNextWeek}</p>
+          <p className="text-sm text-brand-400 mb-3">{recap.focusNextWeek}</p>
           <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-700">
             <div>
               <p className="text-xs text-gray-500">Sets</p>
@@ -93,10 +104,10 @@ export default function WeeklyRecap({
       <button
         onClick={onRegenerate}
         disabled={regenerating || loading}
-        className="mt-3 flex items-center gap-1.5 text-xs text-gray-400 hover:text-white disabled:opacity-50 transition-colors"
+        className="mt-3 flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 disabled:opacity-50 transition-colors"
       >
         <RefreshCw size={12} className={regenerating ? 'animate-spin' : ''} />
-        {regenerating ? 'Regenerating...' : 'Regenerate'}
+        {regenerating ? 'Regenerating...' : 'Regenerate recap'}
       </button>
     </div>
   )

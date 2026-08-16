@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Dumbbell, Pencil, X, Check } from 'lucide-react'
+import { X, Check } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
-import LogWorkoutForm from '@/components/gym/LogWorkoutForm'
+import GymTopStrip from '@/components/gym/GymTopStrip'
+import LogWorkoutModal from '@/components/gym/LogWorkoutModal'
+import GymStreakCard from '@/components/gym/GymStreakCard'
 import WeeklyVolume from '@/components/gym/WeeklyVolume'
 import RecentSessions from '@/components/gym/RecentSessions'
 import TrainingRecommendation from '@/components/gym/TrainingRecommendation'
@@ -11,11 +13,12 @@ import PersonalRecords from '@/components/gym/PersonalRecords'
 import Consistency from '@/components/gym/Consistency'
 import WeeklyRecapCard, { type RecapData } from '@/components/gym/WeeklyRecap'
 import { startOfIsoWeekUTC, isoDateUTC } from '@/lib/gym/week'
+import { deriveSplitLabel } from '@/lib/gym/splitLabel'
 import type { WeeklyPayload, MuscleRecommendation, ExercisePR } from '@/components/gym/types'
 
 interface ActivityPayload {
   days: { date: string; value: number }[]
-  streak: { current: number; longest: number }
+  streak: { current: number; longest: number; thisMonth: { active: number; total: number } }
 }
 
 interface GymProfile {
@@ -37,15 +40,21 @@ const EXP_LABELS: Record<string, string> = {
   beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced',
 }
 
+const emptyActivity: ActivityPayload = {
+  days: [],
+  streak: { current: 0, longest: 0, thisMonth: { active: 0, total: 30 } },
+}
+
 export default function GymPage() {
   const [profile, setProfile] = useState<GymProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [showLogModal, setShowLogModal] = useState(false)
   const [weekly, setWeekly] = useState<WeeklyPayload | null>(null)
   const [recommendations, setRecommendations] = useState<MuscleRecommendation[]>([])
   const [prs, setPrs] = useState<ExercisePR[]>([])
-  const [activity, setActivity] = useState<ActivityPayload>({ days: [], streak: { current: 0, longest: 0 } })
+  const [activity, setActivity] = useState<ActivityPayload>(emptyActivity)
   const lastWeekMonday = (() => {
     const d = new Date()
     d.setUTCDate(d.getUTCDate() - 7)
@@ -161,129 +170,173 @@ export default function GymPage() {
     setSaving(false)
   }
 
-  const inputClass = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 text-sm'
+  const inputClass = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 text-sm'
 
   if (loading) return <LoadingSpinner text="Loading gym profile..." />
 
-  return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center gap-2 mb-6">
-        <Dumbbell size={22} className="text-indigo-400" />
-        <h1 className="text-2xl font-bold text-white">Gym Tracker</h1>
-      </div>
+  const lastSession = (() => {
+    const s = weekly?.recentSessions?.[0]
+    if (!s) return null
+    const label = deriveSplitLabel(s.exercises.map((ex) => ex.muscleGroup))
+    const sessionDate = new Date(s.date + 'T00:00:00.000Z')
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+    const daysAgo = Math.round((today.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24))
+    return { label, daysAgo }
+  })()
 
-      {/* Profile card */}
-      <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-white">Profile</h2>
+  const splitCaption = [profile?.programSplit, profile?.trainingDaysPerWeek ? `${profile.trainingDaysPerWeek} DAY SPLIT` : null]
+    .filter(Boolean)
+    .join(' · ')
+    .toUpperCase()
+
+  return (
+    <div className="-m-4 md:-m-8">
+      <GymTopStrip
+        goal={profile?.goal ?? null}
+        trainingDaysPerWeek={profile?.trainingDaysPerWeek ?? null}
+        onEditProfile={() => setEditing((v) => !v)}
+        onLogWorkout={() => setShowLogModal(true)}
+      />
+
+      <div className="mx-auto flex max-w-7xl flex-col gap-5 p-4 md:p-8">
+        {/* HERO ROW */}
+        <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+          <TrainingRecommendation
+            recommendations={recommendations}
+            lastSession={lastSession}
+            weeklySets={weekly?.totalWeeklySets ?? 0}
+            weeklyTonnageKg={weekly?.totalWeeklyTonnageKg ?? 0}
+          />
+          <GymStreakCard
+            current={activity.streak.current}
+            longest={activity.streak.longest}
+            thisMonth={activity.streak.thisMonth}
+          />
+        </section>
+
+        {/* PROFILE */}
+        <div className="bg-gray-800 border border-gray-700 rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-white">Profile</h2>
+            {!editing ? (
+              splitCaption && <span className="text-xs text-gray-500">{splitCaption}</span>
+            ) : (
+              <div className="flex gap-2">
+                <button onClick={() => setEditing(false)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors">
+                  <X size={14} /> Cancel
+                </button>
+                <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 text-sm text-brand-400 hover:text-brand-300 transition-colors">
+                  <Check size={14} /> {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            )}
+          </div>
+
           {!editing ? (
-            <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors">
-              <Pencil size={14} /> Edit
-            </button>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {[
+                { label: 'Current Weight', value: profile?.currentWeightKg ? `${profile.currentWeightKg} kg` : null },
+                { label: 'Target Weight', value: profile?.targetWeightKg ? `${profile.targetWeightKg} kg` : null },
+                { label: 'Height', value: profile?.heightCm ? `${profile.heightCm} cm` : null },
+                { label: 'Goal', value: profile?.goal ? GOAL_LABELS[profile.goal] ?? profile.goal : null },
+                { label: 'Experience', value: profile?.experienceLevel ? EXP_LABELS[profile.experienceLevel] ?? profile.experienceLevel : null },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <p className="text-xs text-gray-500 mb-0.5">{label}</p>
+                  <p className={`text-sm font-medium ${value ? 'text-white' : 'text-gray-600'}`}>{value ?? 'Not set'}</p>
+                </div>
+              ))}
+              {profile?.injuryNotes && (
+                <div className="col-span-2 md:col-span-5">
+                  <p className="text-xs text-gray-500 mb-0.5">Injury Notes</p>
+                  <p className="text-sm text-yellow-400">{profile.injuryNotes}</p>
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="flex gap-2">
-              <button onClick={() => setEditing(false)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors">
-                <X size={14} /> Cancel
-              </button>
-              <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-                <Check size={14} /> {saving ? 'Saving...' : 'Save'}
-              </button>
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Weight (kg)</label>
+                  <input type="number" step="0.1" value={form.currentWeightKg} onChange={e => setForm(f => ({ ...f, currentWeightKg: e.target.value }))} className={inputClass} placeholder="70" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Height (cm)</label>
+                  <input type="number" value={form.heightCm} onChange={e => setForm(f => ({ ...f, heightCm: e.target.value }))} className={inputClass} placeholder="175" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Target (kg)</label>
+                  <input type="number" step="0.1" value={form.targetWeightKg} onChange={e => setForm(f => ({ ...f, targetWeightKg: e.target.value }))} className={inputClass} placeholder="76" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Goal</label>
+                  <select value={form.goal} onChange={e => setForm(f => ({ ...f, goal: e.target.value }))} className={inputClass}>
+                    <option value="">Select goal</option>
+                    <option value="lean_bulk">Lean Bulk</option>
+                    <option value="cut">Cut</option>
+                    <option value="recomposition">Recomposition</option>
+                    <option value="maintain">Maintain</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Experience</label>
+                  <select value={form.experienceLevel} onChange={e => setForm(f => ({ ...f, experienceLevel: e.target.value }))} className={inputClass}>
+                    <option value="">Select level</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Training Days/Week</label>
+                  <input type="number" min={1} max={7} value={form.trainingDaysPerWeek} onChange={e => setForm(f => ({ ...f, trainingDaysPerWeek: e.target.value }))} className={inputClass} placeholder="4" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Program / Split</label>
+                  <input type="text" value={form.programSplit} onChange={e => setForm(f => ({ ...f, programSplit: e.target.value }))} className={inputClass} placeholder="Push Pull Legs" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Injury Notes</label>
+                <textarea value={form.injuryNotes} onChange={e => setForm(f => ({ ...f, injuryNotes: e.target.value }))} rows={2} className={`${inputClass} resize-none`} placeholder="Optional..." />
+              </div>
             </div>
           )}
         </div>
 
-        {!editing ? (
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Current Weight', value: profile?.currentWeightKg ? `${profile.currentWeightKg} kg` : null },
-              { label: 'Target Weight', value: profile?.targetWeightKg ? `${profile.targetWeightKg} kg` : null },
-              { label: 'Height', value: profile?.heightCm ? `${profile.heightCm} cm` : null },
-              { label: 'Goal', value: profile?.goal ? GOAL_LABELS[profile.goal] ?? profile.goal : null },
-              { label: 'Experience', value: profile?.experienceLevel ? EXP_LABELS[profile.experienceLevel] ?? profile.experienceLevel : null },
-              { label: 'Training Days/Week', value: profile?.trainingDaysPerWeek ? `${profile.trainingDaysPerWeek} days` : null },
-              { label: 'Program / Split', value: profile?.programSplit },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-                <p className={`text-sm font-medium ${value ? 'text-white' : 'text-gray-600'}`}>{value ?? 'Not set'}</p>
-              </div>
-            ))}
-            {profile?.injuryNotes && (
-              <div className="col-span-2">
-                <p className="text-xs text-gray-500 mb-0.5">Injury Notes</p>
-                <p className="text-sm text-yellow-400">{profile.injuryNotes}</p>
-              </div>
-            )}
+        {/* MUSCLE SCORE + CONSISTENCY/PRS */}
+        <section className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
+          <WeeklyVolume volume={weekly?.volume ?? []} />
+          <div className="flex flex-col gap-5">
+            <Consistency days={activity.days} streak={activity.streak} />
+            <PersonalRecords records={prs} />
           </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Weight (kg)</label>
-                <input type="number" step="0.1" value={form.currentWeightKg} onChange={e => setForm(f => ({ ...f, currentWeightKg: e.target.value }))} className={inputClass} placeholder="70" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Height (cm)</label>
-                <input type="number" value={form.heightCm} onChange={e => setForm(f => ({ ...f, heightCm: e.target.value }))} className={inputClass} placeholder="175" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Target (kg)</label>
-                <input type="number" step="0.1" value={form.targetWeightKg} onChange={e => setForm(f => ({ ...f, targetWeightKg: e.target.value }))} className={inputClass} placeholder="76" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Goal</label>
-                <select value={form.goal} onChange={e => setForm(f => ({ ...f, goal: e.target.value }))} className={inputClass}>
-                  <option value="">Select goal</option>
-                  <option value="lean_bulk">Lean Bulk</option>
-                  <option value="cut">Cut</option>
-                  <option value="recomposition">Recomposition</option>
-                  <option value="maintain">Maintain</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Experience</label>
-                <select value={form.experienceLevel} onChange={e => setForm(f => ({ ...f, experienceLevel: e.target.value }))} className={inputClass}>
-                  <option value="">Select level</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Training Days/Week</label>
-                <input type="number" min={1} max={7} value={form.trainingDaysPerWeek} onChange={e => setForm(f => ({ ...f, trainingDaysPerWeek: e.target.value }))} className={inputClass} placeholder="4" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Program / Split</label>
-                <input type="text" value={form.programSplit} onChange={e => setForm(f => ({ ...f, programSplit: e.target.value }))} className={inputClass} placeholder="Push Pull Legs" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Injury Notes</label>
-              <textarea value={form.injuryNotes} onChange={e => setForm(f => ({ ...f, injuryNotes: e.target.value }))} rows={2} className={`${inputClass} resize-none`} placeholder="Optional..." />
-            </div>
-          </div>
-        )}
+        </section>
+
+        {/* RECENT SESSIONS + WEEKLY RECAP */}
+        <section className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
+          <RecentSessions sessions={weekly?.recentSessions ?? []} />
+          <WeeklyRecapCard
+            weekStart={recapWeekStart}
+            canGoNext={recapWeekStart < lastWeekMonday}
+            onPrevWeek={() => shiftWeek(-1)}
+            onNextWeek={() => shiftWeek(1)}
+            recap={recap}
+            loading={recapLoading}
+            onRegenerate={handleRegenerate}
+            regenerating={regenerating}
+            regenerateError={regenerateError}
+          />
+        </section>
       </div>
 
-      <LogWorkoutForm onLogged={refetchWeekly} />
-      <TrainingRecommendation recommendations={recommendations} />
-      <WeeklyVolume volume={weekly?.volume ?? []} />
-      <Consistency days={activity.days} streak={activity.streak} />
-      <PersonalRecords records={prs} />
-      <RecentSessions sessions={weekly?.recentSessions ?? []} />
-      <WeeklyRecapCard
-        weekStart={recapWeekStart}
-        canGoNext={recapWeekStart < lastWeekMonday}
-        onPrevWeek={() => shiftWeek(-1)}
-        onNextWeek={() => shiftWeek(1)}
-        recap={recap}
-        loading={recapLoading}
-        onRegenerate={handleRegenerate}
-        regenerating={regenerating}
-        regenerateError={regenerateError}
+      <LogWorkoutModal
+        open={showLogModal}
+        onClose={() => setShowLogModal(false)}
+        onLogged={refetchWeekly}
       />
     </div>
   )

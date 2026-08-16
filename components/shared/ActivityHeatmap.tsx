@@ -5,6 +5,8 @@ interface ActivityHeatmapProps {
   levels?: number
   accent?: string
   label?: string
+  showLegend?: boolean
+  rangeLabel?: string
 }
 
 const DAY_LABELS = ['Mon', '', 'Wed', '', 'Fri', '', '']
@@ -57,6 +59,8 @@ export default function ActivityHeatmap({
   levels = 4,
   accent = '#6366f1',
   label = 'activity',
+  showLegend = false,
+  rangeLabel,
 }: ActivityHeatmapProps) {
   const byDate = new Map(data.map((d) => [d.date, d.value]))
   const max = Math.max(0, ...data.map((d) => d.value))
@@ -116,9 +120,25 @@ export default function ActivityHeatmap({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="hidden sm:block w-max">{renderGrid(fullWeeks)}</div>
-      <div className="sm:hidden w-max">{renderGrid(narrowWeeks)}</div>
+    <div>
+      {rangeLabel && <p className="text-[11px] text-gray-500 mb-1.5">{rangeLabel}</p>}
+      <div className="overflow-x-auto">
+        <div className="hidden sm:block w-max">{renderGrid(fullWeeks)}</div>
+        <div className="sm:hidden w-max">{renderGrid(narrowWeeks)}</div>
+      </div>
+      {showLegend && (
+        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-gray-500">
+          <span>less</span>
+          {Array.from({ length: levels + 1 }, (_, i) => (
+            <div
+              key={i}
+              className="w-[10px] h-[10px] rounded-[2px]"
+              style={{ backgroundColor: levelColor(i, levels, accent) }}
+            />
+          ))}
+          <span>more</span>
+        </div>
+      )}
     </div>
   )
 }

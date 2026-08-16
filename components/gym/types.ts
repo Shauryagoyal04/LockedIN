@@ -30,6 +30,8 @@ export interface VolumeRow {
 export interface WeeklyPayload {
   weekStart: string
   volume: VolumeRow[]
+  totalWeeklySets: number
+  totalWeeklyTonnageKg: number
   recentSessions: SessionRow[]
 }
 

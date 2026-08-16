@@ -30,16 +30,27 @@ export async function getGymActivity(userId: number, weeks: number): Promise<Act
 export interface StreakInfo {
   current: number
   longest: number
+  thisMonth: { active: number; total: number }
 }
 
 export async function getGymStreak(userId: number): Promise<StreakInfo> {
   const activity = await getGymActivity(userId, 52)
   const activeDates = new Set(activity.filter((d) => d.value > 0).map((d) => d.date))
 
-  if (activeDates.size === 0) return { current: 0, longest: 0 }
-
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
+
+  const daysInMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0)).getUTCDate()
+  let activeThisMonth = 0
+  for (const dateStr of Array.from(activeDates)) {
+    const d = new Date(dateStr + 'T00:00:00.000Z')
+    if (d.getUTCFullYear() === today.getUTCFullYear() && d.getUTCMonth() === today.getUTCMonth()) {
+      activeThisMonth++
+    }
+  }
+  const thisMonth = { active: activeThisMonth, total: daysInMonth }
+
+  if (activeDates.size === 0) return { current: 0, longest: 0, thisMonth }
 
   let current = 0
   const cursor = new Date(today)
@@ -66,5 +77,5 @@ export async function getGymStreak(userId: number): Promise<StreakInfo> {
     prevTime = t
   }
 
-  return { current, longest: Math.max(longest, current) }
+  return { current, longest: Math.max(longest, current), thisMonth }
 }

@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_META } from '@/lib/gym/constants'
 import { startOfIsoWeekUTC } from '@/lib/gym/week'
-import { parseSets } from '@/lib/gym/sets'
+import { parseSets, tonnage } from '@/lib/gym/sets'
 
 export async function GET() {
   const session = await auth()
@@ -23,10 +23,15 @@ export async function GET() {
   })
 
   const setsByGroup = new Map<string, number>()
+  let totalWeeklySets = 0
+  let totalWeeklyTonnageKg = 0
   for (const s of sessions) {
     for (const ex of s.exercises) {
       const group = ex.muscleGroup ?? 'other'
-      setsByGroup.set(group, (setsByGroup.get(group) ?? 0) + parseSets(ex.setsJson).length)
+      const sets = parseSets(ex.setsJson)
+      setsByGroup.set(group, (setsByGroup.get(group) ?? 0) + sets.length)
+      totalWeeklySets += sets.length
+      totalWeeklyTonnageKg += tonnage(sets)
     }
   }
 
@@ -50,6 +55,8 @@ export async function GET() {
   return NextResponse.json({
     weekStart: weekStart.toISOString().slice(0, 10),
     volume,
+    totalWeeklySets,
+    totalWeeklyTonnageKg: Math.round(totalWeeklyTonnageKg),
     recentSessions: recentSessions.map((s) => ({
       id: s.id,
       date: s.date.toISOString().slice(0, 10),

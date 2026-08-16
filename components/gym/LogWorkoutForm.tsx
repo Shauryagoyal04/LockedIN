@@ -42,9 +42,9 @@ export default function LogWorkoutForm({ onLogged }: { onLogged: (session: Sessi
   }
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-4">
+    <div className="bg-gray-800 border border-gray-700 rounded-2xl p-5 mb-4">
       <div className="flex items-center gap-2 mb-1">
-        <Sparkles size={16} className="text-indigo-400" />
+        <Sparkles size={16} className="text-brand-500" />
         <h2 className="font-semibold text-white">Log a Workout</h2>
       </div>
       <p className="text-xs text-gray-500 mb-3">
@@ -55,7 +55,7 @@ export default function LogWorkoutForm({ onLogged }: { onLogged: (session: Sessi
         onChange={(e) => setText(e.target.value)}
         rows={3}
         placeholder="e.g. Bench press 4 sets of 8 at 60kg, then some squats"
-        className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 text-sm resize-none"
+        className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-brand-500 text-sm resize-none"
       />
       {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
       {newPRs.length > 0 && (
@@ -71,7 +71,7 @@ export default function LogWorkoutForm({ onLogged }: { onLogged: (session: Sessi
         <button
           onClick={handleSubmit}
           disabled={submitting || !text.trim()}
-          className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 disabled:bg-gray-700 disabled:text-gray-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
           {submitting && <Loader2 size={14} className="animate-spin" />}
           {submitting ? 'Analyzing...' : 'Log Workout'}

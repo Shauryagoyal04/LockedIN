@@ -12,9 +12,9 @@ export default function PersonalRecords({ records }: { records: ExercisePR[] }) 
   const visible = showAll ? records : records.slice(0, CAP)
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 mb-4">
+    <div className="bg-gray-800 border border-gray-700 rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-3">
-        <Trophy size={16} className="text-indigo-400" />
+        <Trophy size={16} className="text-brand-500" />
         <h2 className="font-semibold text-white">Personal Records</h2>
       </div>
 
@@ -29,12 +29,12 @@ export default function PersonalRecords({ records }: { records: ExercisePR[] }) 
               <div key={r.normalizedName} className="flex items-center justify-between text-sm">
                 <Link
                   href={`/gym/exercise/${encodeURIComponent(r.normalizedName)}`}
-                  className="text-gray-300 hover:text-indigo-400 transition-colors"
+                  className="text-gray-300 hover:text-brand-400 transition-colors"
                 >
                   {r.displayName}
                 </Link>
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="font-mono text-white">
+                  <span className="font-mono text-brand-500 font-semibold">
                     {r.bestWeightKg}kg × {r.reps}
                   </span>
                   <span className="text-gray-500">{r.date}</span>
@@ -45,7 +45,7 @@ export default function PersonalRecords({ records }: { records: ExercisePR[] }) 
           {records.length > CAP && (
             <button
               onClick={() => setShowAll((v) => !v)}
-              className="mt-3 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="mt-3 text-xs text-brand-400 hover:text-brand-300 transition-colors"
             >
               {showAll ? 'Show less' : `Show all (${records.length})`}
             </button>
