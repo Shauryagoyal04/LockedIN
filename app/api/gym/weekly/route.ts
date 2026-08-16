@@ -2,15 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { MUSCLE_GROUPS, MUSCLE_GROUP_META } from '@/lib/gym/constants'
-
-function startOfIsoWeekUTC(d: Date): Date {
-  const date = new Date(d)
-  date.setUTCHours(0, 0, 0, 0)
-  const day = date.getUTCDay() // 0=Sun..6=Sat
-  const diff = day === 0 ? -6 : 1 - day // shift to Monday
-  date.setUTCDate(date.getUTCDate() + diff)
-  return date
-}
+import { startOfIsoWeekUTC } from '@/lib/gym/week'
+import { parseSets } from '@/lib/gym/sets'
 
 export async function GET() {
   const session = await auth()
@@ -32,9 +25,8 @@ export async function GET() {
   const setsByGroup = new Map<string, number>()
   for (const s of sessions) {
     for (const ex of s.exercises) {
-      const setsArr = Array.isArray(ex.setsJson) ? (ex.setsJson as unknown[]) : []
       const group = ex.muscleGroup ?? 'other'
-      setsByGroup.set(group, (setsByGroup.get(group) ?? 0) + setsArr.length)
+      setsByGroup.set(group, (setsByGroup.get(group) ?? 0) + parseSets(ex.setsJson).length)
     }
   }
 
