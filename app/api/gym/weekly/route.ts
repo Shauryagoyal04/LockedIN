@@ -57,6 +57,7 @@ export async function GET() {
       exercises: s.exercises.map((e) => ({
         id: e.id,
         name: e.name,
+        normalizedName: e.normalizedName,
         muscleGroup: e.muscleGroup,
         sets: e.setsJson,
         isPr: e.isPr,

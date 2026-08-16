@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import type { SessionRow } from './types'
 
 export default function RecentSessions({ sessions }: { sessions: SessionRow[] }) {
@@ -17,7 +18,9 @@ export default function RecentSessions({ sessions }: { sessions: SessionRow[] })
                 {s.exercises.map((ex, i) => (
                   <span key={ex.id}>
                     {i > 0 && ', '}
-                    <span className="text-white">{ex.name}</span>
+                    <Link href={`/gym/exercise/${encodeURIComponent(ex.normalizedName)}`} className="text-white hover:text-indigo-400 transition-colors">
+                      {ex.name}
+                    </Link>
                     {ex.isPr && <span className="ml-1 text-yellow-400" title="New PR">🏆</span>}
                     {' '}({ex.sets.length}×{ex.sets[0]?.reps ?? '—'}
                     {ex.muscleGroup ? `, ${ex.muscleGroup}` : ''})

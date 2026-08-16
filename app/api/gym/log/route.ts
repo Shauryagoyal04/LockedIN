@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     exercises: created.exercises.map((e) => ({
       id: e.id,
       name: e.name,
+      normalizedName: e.normalizedName,
       muscleGroup: e.muscleGroup,
       sets: e.setsJson,
       isPr: prExerciseIds.has(e.id),

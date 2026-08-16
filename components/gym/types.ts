@@ -6,6 +6,7 @@ export interface SetEntry {
 export interface ExerciseRow {
   id: number
   name: string
+  normalizedName: string
   muscleGroup: string | null
   sets: SetEntry[]
   isPr: boolean

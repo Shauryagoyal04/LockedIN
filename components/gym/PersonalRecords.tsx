@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Trophy } from 'lucide-react'
 import type { ExercisePR } from './types'
 
@@ -26,7 +27,12 @@ export default function PersonalRecords({ records }: { records: ExercisePR[] }) 
           <div className="space-y-2">
             {visible.map((r) => (
               <div key={r.normalizedName} className="flex items-center justify-between text-sm">
-                <span className="text-gray-300">{r.displayName}</span>
+                <Link
+                  href={`/gym/exercise/${encodeURIComponent(r.normalizedName)}`}
+                  className="text-gray-300 hover:text-indigo-400 transition-colors"
+                >
+                  {r.displayName}
+                </Link>
                 <div className="flex items-center gap-3 text-xs">
                   <span className="font-mono text-white">
                     {r.bestWeightKg}kg × {r.reps}
