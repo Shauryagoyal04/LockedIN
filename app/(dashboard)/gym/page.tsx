@@ -6,7 +6,8 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import LogWorkoutForm from '@/components/gym/LogWorkoutForm'
 import WeeklyVolume from '@/components/gym/WeeklyVolume'
 import RecentSessions from '@/components/gym/RecentSessions'
-import type { WeeklyPayload } from '@/components/gym/types'
+import TrainingRecommendation from '@/components/gym/TrainingRecommendation'
+import type { WeeklyPayload, MuscleRecommendation } from '@/components/gym/types'
 
 interface GymProfile {
   userId: number
@@ -33,6 +34,7 @@ export default function GymPage() {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [weekly, setWeekly] = useState<WeeklyPayload | null>(null)
+  const [recommendations, setRecommendations] = useState<MuscleRecommendation[]>([])
   const [form, setForm] = useState({
     currentWeightKg: '', heightCm: '', targetWeightKg: '',
     goal: '', experienceLevel: '', trainingDaysPerWeek: '',
@@ -43,6 +45,9 @@ export default function GymPage() {
     fetch('/api/gym/weekly')
       .then(r => r.json())
       .then((data: WeeklyPayload) => setWeekly(data))
+    fetch('/api/gym/recommendation')
+      .then(r => r.json())
+      .then((data: { recommendations: MuscleRecommendation[] }) => setRecommendations(data.recommendations))
   }, [])
 
   useEffect(() => {
@@ -197,6 +202,7 @@ export default function GymPage() {
       </div>
 
       <LogWorkoutForm onLogged={refetchWeekly} />
+      <TrainingRecommendation recommendations={recommendations} />
       <WeeklyVolume volume={weekly?.volume ?? []} />
       <RecentSessions sessions={weekly?.recentSessions ?? []} />
     </div>

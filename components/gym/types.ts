@@ -30,3 +30,12 @@ export interface WeeklyPayload {
   volume: VolumeRow[]
   recentSessions: SessionRow[]
 }
+
+export interface MuscleRecommendation {
+  group: string
+  label: string
+  color: string
+  sets: number
+  target: number
+  daysSinceLastTrained: number | null
+}
