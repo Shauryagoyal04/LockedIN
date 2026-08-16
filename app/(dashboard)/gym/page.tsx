@@ -9,6 +9,8 @@ import RecentSessions from '@/components/gym/RecentSessions'
 import TrainingRecommendation from '@/components/gym/TrainingRecommendation'
 import PersonalRecords from '@/components/gym/PersonalRecords'
 import Consistency from '@/components/gym/Consistency'
+import WeeklyRecapCard, { type RecapData } from '@/components/gym/WeeklyRecap'
+import { startOfIsoWeekUTC, isoDateUTC } from '@/lib/gym/week'
 import type { WeeklyPayload, MuscleRecommendation, ExercisePR } from '@/components/gym/types'
 
 interface ActivityPayload {
@@ -44,6 +46,16 @@ export default function GymPage() {
   const [recommendations, setRecommendations] = useState<MuscleRecommendation[]>([])
   const [prs, setPrs] = useState<ExercisePR[]>([])
   const [activity, setActivity] = useState<ActivityPayload>({ days: [], streak: { current: 0, longest: 0 } })
+  const lastWeekMonday = (() => {
+    const d = new Date()
+    d.setUTCDate(d.getUTCDate() - 7)
+    return isoDateUTC(startOfIsoWeekUTC(d))
+  })()
+  const [recapWeekStart, setRecapWeekStart] = useState(lastWeekMonday)
+  const [recap, setRecap] = useState<RecapData | null>(null)
+  const [recapLoading, setRecapLoading] = useState(true)
+  const [regenerating, setRegenerating] = useState(false)
+  const [regenerateError, setRegenerateError] = useState<string | null>(null)
   const [form, setForm] = useState({
     currentWeightKg: '', heightCm: '', targetWeightKg: '',
     goal: '', experienceLevel: '', trainingDaysPerWeek: '',
@@ -64,6 +76,46 @@ export default function GymPage() {
       .then(r => r.json())
       .then((data: ActivityPayload) => setActivity(data))
   }, [])
+
+  const fetchRecap = useCallback((weekStart: string) => {
+    setRecapLoading(true)
+    fetch(`/api/gym/recap?weekStart=${weekStart}`)
+      .then(r => r.json())
+      .then((data: { recap: RecapData | null }) => setRecap(data.recap))
+      .finally(() => setRecapLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetchRecap(recapWeekStart)
+  }, [recapWeekStart, fetchRecap])
+
+  function shiftWeek(weeks: number) {
+    const d = new Date(recapWeekStart + 'T00:00:00.000Z')
+    d.setUTCDate(d.getUTCDate() + weeks * 7)
+    setRecapWeekStart(isoDateUTC(startOfIsoWeekUTC(d)))
+  }
+
+  async function handleRegenerate() {
+    setRegenerating(true)
+    setRegenerateError(null)
+    try {
+      const res = await fetch('/api/gym/recap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekStart: recapWeekStart }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setRegenerateError(data.error || 'Failed to regenerate recap')
+        return
+      }
+      setRecap(data.recap)
+    } catch {
+      setRegenerateError('Network error — please try again')
+    } finally {
+      setRegenerating(false)
+    }
+  }
 
   useEffect(() => {
     fetch('/api/gym/profile')
@@ -222,6 +274,17 @@ export default function GymPage() {
       <Consistency days={activity.days} streak={activity.streak} />
       <PersonalRecords records={prs} />
       <RecentSessions sessions={weekly?.recentSessions ?? []} />
+      <WeeklyRecapCard
+        weekStart={recapWeekStart}
+        canGoNext={recapWeekStart < lastWeekMonday}
+        onPrevWeek={() => shiftWeek(-1)}
+        onNextWeek={() => shiftWeek(1)}
+        recap={recap}
+        loading={recapLoading}
+        onRegenerate={handleRegenerate}
+        regenerating={regenerating}
+        regenerateError={regenerateError}
+      />
     </div>
   )
 }

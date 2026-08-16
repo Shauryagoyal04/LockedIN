@@ -24,6 +24,7 @@ model User {
   weightLogs        WeightLog[]
   dailyScores       DailyScore[]
   productivityGoal  ProductivityGoal?
+  weeklyRecaps      WeeklyRecap[]
 }
 
 model DSAProfile {
@@ -135,6 +136,22 @@ model DailyScore {
   streakBonus Float    @default(0)
 
   @@unique([userId, date])
+}
+
+model WeeklyRecap {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart      DateTime @db.Date
+  headline       String
+  highlights     Json
+  focusNextWeek  String
+  totalSets      Int
+  totalTonnageKg Float
+  trainingDays   Int
+  generatedAt    DateTime @default(now())
+
+  @@unique([userId, weekStart])
 }
 
 model ProductivityGoal {
