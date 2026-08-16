@@ -8,7 +8,13 @@ import WeeklyVolume from '@/components/gym/WeeklyVolume'
 import RecentSessions from '@/components/gym/RecentSessions'
 import TrainingRecommendation from '@/components/gym/TrainingRecommendation'
 import PersonalRecords from '@/components/gym/PersonalRecords'
+import Consistency from '@/components/gym/Consistency'
 import type { WeeklyPayload, MuscleRecommendation, ExercisePR } from '@/components/gym/types'
+
+interface ActivityPayload {
+  days: { date: string; value: number }[]
+  streak: { current: number; longest: number }
+}
 
 interface GymProfile {
   userId: number
@@ -37,6 +43,7 @@ export default function GymPage() {
   const [weekly, setWeekly] = useState<WeeklyPayload | null>(null)
   const [recommendations, setRecommendations] = useState<MuscleRecommendation[]>([])
   const [prs, setPrs] = useState<ExercisePR[]>([])
+  const [activity, setActivity] = useState<ActivityPayload>({ days: [], streak: { current: 0, longest: 0 } })
   const [form, setForm] = useState({
     currentWeightKg: '', heightCm: '', targetWeightKg: '',
     goal: '', experienceLevel: '', trainingDaysPerWeek: '',
@@ -53,6 +60,9 @@ export default function GymPage() {
     fetch('/api/gym/prs')
       .then(r => r.json())
       .then((data: { records: ExercisePR[] }) => setPrs(data.records))
+    fetch('/api/gym/activity')
+      .then(r => r.json())
+      .then((data: ActivityPayload) => setActivity(data))
   }, [])
 
   useEffect(() => {
@@ -209,6 +219,7 @@ export default function GymPage() {
       <LogWorkoutForm onLogged={refetchWeekly} />
       <TrainingRecommendation recommendations={recommendations} />
       <WeeklyVolume volume={weekly?.volume ?? []} />
+      <Consistency days={activity.days} streak={activity.streak} />
       <PersonalRecords records={prs} />
       <RecentSessions sessions={weekly?.recentSessions ?? []} />
     </div>

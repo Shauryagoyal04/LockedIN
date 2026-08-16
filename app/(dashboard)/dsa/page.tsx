@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Code2, RefreshCw, Flame } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Heatmap57 from '@/components/dashboard/Heatmap57'
+import ActivityHeatmap from '@/components/shared/ActivityHeatmap'
 import PlatformCards from '@/components/dsa/PlatformCards'
 import TopicCoverage from '@/components/dsa/TopicCoverage'
 import RecentSubmissions from '@/components/dsa/RecentSubmissions'
@@ -11,11 +12,17 @@ import ContestCard from '@/components/dsa/ContestCard'
 import type { DSAProfile, TodayPayload, SummaryPayload } from '@/components/dsa/types'
 import type { HeatmapDay } from '@/types/dashboard'
 
+interface ActivityDay {
+  date: string
+  value: number
+}
+
 export default function DSAPage() {
   const [profile, setProfile] = useState<DSAProfile | null>(null)
   const [today, setToday] = useState<TodayPayload | null>(null)
   const [heatmap, setHeatmap] = useState<HeatmapDay[]>([])
   const [summary, setSummary] = useState<SummaryPayload | null>(null)
+  const [activity, setActivity] = useState<ActivityDay[]>([])
   const [loading, setLoading] = useState(true)
   const [fetching, setFetching] = useState(false)
   const [fetchMsg, setFetchMsg] = useState('')
@@ -48,14 +55,16 @@ export default function DSAPage() {
       fetch('/api/dsa/today').then((r) => r.json()),
       fetch('/api/dsa/heatmap').then((r) => r.json()),
       fetch('/api/dsa/summary').then((r) => (r.ok ? r.json() : null)),
+      fetch('/api/dsa/activity').then((r) => (r.ok ? r.json() : null)),
     ])
-      .then(([p, t, h, s]) => {
+      .then(([p, t, h, s, a]) => {
         setProfile(p)
         setToday(t)
         const lockInDays: number = h?.days ?? 30
         const rawDays = Array.isArray(h?.data) ? h.data : []
         setHeatmap(buildHeatmap(rawDays, lockInDays, p?.dailyTarget ?? 5))
         setSummary(s)
+        setActivity(Array.isArray(a?.days) ? a.days : [])
       })
       .finally(() => setLoading(false))
   }, [])
@@ -177,6 +186,12 @@ export default function DSAPage() {
           platforms={today?.byPlatform ?? []}
           lastFetched={today?.lastFetched ?? null}
         />
+
+        {/* CONSISTENCY */}
+        <section className="rounded-2xl border border-line bg-surface-2 p-5">
+          <h2 className="mb-3 font-mono text-[11px] tracking-widest text-ink-subtle">CONSISTENCY</h2>
+          <ActivityHeatmap data={activity} accent="#ff5b1f" label="problems solved" />
+        </section>
 
         {/* TOPICS + RECENT */}
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
