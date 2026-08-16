@@ -59,6 +59,7 @@ export async function GET() {
         name: e.name,
         muscleGroup: e.muscleGroup,
         sets: e.setsJson,
+        isPr: e.isPr,
       })),
     })),
   })

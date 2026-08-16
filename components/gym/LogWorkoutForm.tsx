@@ -1,14 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, Loader2 } from 'lucide-react'
+import { Sparkles, Loader2, Trophy } from 'lucide-react'
 import type { SessionRow } from './types'
+
+interface LogResponse extends SessionRow {
+  newPRs: { exerciseId: number; displayName: string; weightKg: number }[]
+}
 
 export default function LogWorkoutForm({ onLogged }: { onLogged: (session: SessionRow) => void }) {
   const [text, setText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastLogged, setLastLogged] = useState<SessionRow | null>(null)
+  const [newPRs, setNewPRs] = useState<LogResponse['newPRs']>([])
 
   async function handleSubmit() {
     if (!text.trim() || submitting) return
@@ -20,12 +25,13 @@ export default function LogWorkoutForm({ onLogged }: { onLogged: (session: Sessi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       })
-      const data = await res.json()
+      const data: LogResponse = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Failed to log workout')
+        setError((data as unknown as { error?: string }).error || 'Failed to log workout')
         return
       }
       setLastLogged(data)
+      setNewPRs(data.newPRs ?? [])
       setText('')
       onLogged(data)
     } catch {
@@ -52,6 +58,15 @@ export default function LogWorkoutForm({ onLogged }: { onLogged: (session: Sessi
         className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 text-sm resize-none"
       />
       {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
+      {newPRs.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {newPRs.map((pr) => (
+            <p key={pr.exerciseId} className="flex items-center gap-1.5 text-sm text-yellow-400">
+              <Trophy size={14} /> New PR — {pr.displayName} {pr.weightKg}kg
+            </p>
+          ))}
+        </div>
+      )}
       <div className="flex items-center justify-between mt-3">
         <button
           onClick={handleSubmit}

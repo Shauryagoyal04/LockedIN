@@ -18,6 +18,7 @@ export default function RecentSessions({ sessions }: { sessions: SessionRow[] })
                   <span key={ex.id}>
                     {i > 0 && ', '}
                     <span className="text-white">{ex.name}</span>
+                    {ex.isPr && <span className="ml-1 text-yellow-400" title="New PR">🏆</span>}
                     {' '}({ex.sets.length}×{ex.sets[0]?.reps ?? '—'}
                     {ex.muscleGroup ? `, ${ex.muscleGroup}` : ''})
                   </span>

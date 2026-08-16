@@ -7,7 +7,8 @@ import LogWorkoutForm from '@/components/gym/LogWorkoutForm'
 import WeeklyVolume from '@/components/gym/WeeklyVolume'
 import RecentSessions from '@/components/gym/RecentSessions'
 import TrainingRecommendation from '@/components/gym/TrainingRecommendation'
-import type { WeeklyPayload, MuscleRecommendation } from '@/components/gym/types'
+import PersonalRecords from '@/components/gym/PersonalRecords'
+import type { WeeklyPayload, MuscleRecommendation, ExercisePR } from '@/components/gym/types'
 
 interface GymProfile {
   userId: number
@@ -35,6 +36,7 @@ export default function GymPage() {
   const [saving, setSaving] = useState(false)
   const [weekly, setWeekly] = useState<WeeklyPayload | null>(null)
   const [recommendations, setRecommendations] = useState<MuscleRecommendation[]>([])
+  const [prs, setPrs] = useState<ExercisePR[]>([])
   const [form, setForm] = useState({
     currentWeightKg: '', heightCm: '', targetWeightKg: '',
     goal: '', experienceLevel: '', trainingDaysPerWeek: '',
@@ -48,6 +50,9 @@ export default function GymPage() {
     fetch('/api/gym/recommendation')
       .then(r => r.json())
       .then((data: { recommendations: MuscleRecommendation[] }) => setRecommendations(data.recommendations))
+    fetch('/api/gym/prs')
+      .then(r => r.json())
+      .then((data: { records: ExercisePR[] }) => setPrs(data.records))
   }, [])
 
   useEffect(() => {
@@ -204,6 +209,7 @@ export default function GymPage() {
       <LogWorkoutForm onLogged={refetchWeekly} />
       <TrainingRecommendation recommendations={recommendations} />
       <WeeklyVolume volume={weekly?.volume ?? []} />
+      <PersonalRecords records={prs} />
       <RecentSessions sessions={weekly?.recentSessions ?? []} />
     </div>
   )

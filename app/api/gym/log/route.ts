@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { parseWorkoutLog } from '@/lib/gym/gemini'
+import { normalizeExerciseName } from '@/lib/gym/exerciseName'
+import { checkForNewPRs } from '@/lib/gym/prs'
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -42,6 +44,7 @@ export async function POST(req: NextRequest) {
           )
           return {
             name: ex.name,
+            normalizedName: normalizeExerciseName(ex.name),
             muscleGroup: ex.muscleGroup,
             setsJson: ex.sets as unknown as Prisma.InputJsonValue,
             totalVolumeKg: totalVolumeKg > 0 ? totalVolumeKg : null,
@@ -52,6 +55,15 @@ export async function POST(req: NextRequest) {
     include: { exercises: true },
   })
 
+  const newPRs = await checkForNewPRs(userId, created.id)
+  const prExerciseIds = new Set(newPRs.map((pr) => pr.exerciseId))
+  if (prExerciseIds.size > 0) {
+    await prisma.gymExercise.updateMany({
+      where: { id: { in: Array.from(prExerciseIds) } },
+      data: { isPr: true },
+    })
+  }
+
   return NextResponse.json({
     id: created.id,
     date: created.date.toISOString().slice(0, 10),
@@ -61,6 +73,8 @@ export async function POST(req: NextRequest) {
       name: e.name,
       muscleGroup: e.muscleGroup,
       sets: e.setsJson,
+      isPr: prExerciseIds.has(e.id),
     })),
+    newPRs,
   })
 }

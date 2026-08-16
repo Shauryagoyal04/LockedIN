@@ -100,8 +100,9 @@ model GymExercise {
   id            Int        @id @default(autoincrement())
   sessionId     Int
   session       GymSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  name          String
-  muscleGroup   String?
+  name           String
+  normalizedName String
+  muscleGroup    String?
   setsJson      Json
   totalVolumeKg Float?
   isPr          Boolean    @default(false)

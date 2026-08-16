@@ -8,6 +8,7 @@ export interface ExerciseRow {
   name: string
   muscleGroup: string | null
   sets: SetEntry[]
+  isPr: boolean
 }
 
 export interface SessionRow {
@@ -38,4 +39,12 @@ export interface MuscleRecommendation {
   sets: number
   target: number
   daysSinceLastTrained: number | null
+}
+
+export interface ExercisePR {
+  normalizedName: string
+  displayName: string
+  bestWeightKg: number
+  reps: number
+  date: string
 }
